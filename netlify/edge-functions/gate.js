@@ -18,7 +18,7 @@
 
 export default async (request, context) => {
   const slug = Netlify.env.get("CLIENT_SLUG") || "goldensandhounds";
-  const secret = Netlify.env.get("ACCESS_SECRET") || "45e06dd1dfccabb65f0b9b4cf834afd6ef6aaab214ff7d5d2ba09d80d17c349d";
+  const secret = Netlify.env.get("ACCESS_SECRET") || "CHANGE_ME_dev_secret";
   const home = Netlify.env.get("VYREL_HOME") || "https://vyrellabs.com";
 
   const token = getCookie(request, "vyrel_access");
