@@ -1,34 +1,38 @@
 // ============================================================
-//  Edge gate for /clients/*   (Netlify Edge Function, Deno)
+//  External client gate  (Netlify Edge Function, Deno)
+//  Copy this file to  netlify/edge-functions/gate.js  in the
+//  CLIENT's own repo (the one on a *.vyrellabs.com subdomain).
 //  ------------------------------------------------------------
-//  Runs BEFORE any file under /clients/ is served — including
-//  HTML, CSS, and images. It verifies the signed cookie issued
-//  by /api/unlock. No valid cookie for THIS client -> the visitor
-//  is bounced back to the homepage. This is what makes the client
-//  sites genuinely un-viewable without a valid access code.
+//  It guards EVERY path on that subdomain. It reads the signed
+//  cookie that vyrellabs.com/api/unlock sets on `.vyrellabs.com`
+//  and lets the visitor through only if the cookie is valid for
+//  THIS client (CLIENT_SLUG). Otherwise it bounces them to the
+//  main site's homepage.
+//
+//  Required env vars on this site (Netlify → Environment variables):
+//    ACCESS_SECRET   same value as the main vyrellabs.com site
+//    CLIENT_SLUG     this client's slug, must match the `slug` in
+//                    the main site's CODES entry (e.g. "acme")
+//    VYREL_HOME      optional, defaults to https://vyrellabs.com
 // ============================================================
 
 export default async (request, context) => {
-  const url = new URL(request.url);
+  const slug = Netlify.env.get("CLIENT_SLUG") || "goldensandhounds";
+  const secret = Netlify.env.get("ACCESS_SECRET") || "45e06dd1dfccabb65f0b9b4cf834afd6ef6aaab214ff7d5d2ba09d80d17c349d";
+  const home = Netlify.env.get("VYREL_HOME") || "https://vyrellabs.com";
 
-  // /clients/<slug>/...  ->  slug is the folder being requested
-  const parts = url.pathname.split("/").filter(Boolean); // ["clients", "<slug>", ...]
-  const slug = parts[1] || "";
-
-  const secret = Netlify.env.get("ACCESS_SECRET") || "CHANGE_ME_dev_secret";
   const token = getCookie(request, "vyrel_access");
-
   if (token && (await verify(secret, token, slug))) {
-    return context.next(); // cookie is valid for this client -> serve the files
+    return context.next(); // valid cookie for this client -> serve the site
   }
 
-  // Locked: send them home with a hint so the page can explain.
-  return Response.redirect(`${url.origin}/?locked=${encodeURIComponent(slug)}`, 302);
+  return Response.redirect(`${home}/?locked=${encodeURIComponent(slug)}`, 302);
 };
 
-export const config = { path: "/clients/*" };
+// Guard the whole site.
+export const config = { path: "/*" };
 
-// ---- helpers ----
+// ---- helpers (identical crypto to the main site's gate) ----
 function getCookie(request, name) {
   const header = request.headers.get("cookie") || "";
   for (const part of header.split(";")) {

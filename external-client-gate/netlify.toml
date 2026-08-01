@@ -1,0 +1,13 @@
+# Copy this into your CLIENT repo's root as netlify.toml
+# (merge with any build settings the site already has).
+
+[build]
+  # If the site is plain HTML, leave this as "." (the repo root).
+  # If it uses a build (Vite, Next, Astro, etc.), set publish to the
+  # build output folder, e.g. "dist" or "build", and add your build command:
+  #   command = "npm run build"
+  publish = "."
+
+# The edge gate is auto-registered from netlify/edge-functions/gate.js
+# (default directory) using the inline `config.path` in that file.
+# Nothing else to declare here for the gate to run.
